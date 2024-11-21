@@ -79,6 +79,9 @@ struct RecordPlayerScreen: View {
     
     var body: some View {
         VStack {
+            Text("This screen is broken as of now.")
+                .font(.title)
+                .multilineTextAlignment(.leading)
             RecordPlayer(animationsObserver: recordPlayerAnimationsObserver)
                 .padding(.top, 40)
             Button {

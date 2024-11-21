@@ -15,12 +15,12 @@ struct CirclesScreen: View {
     var body: some View {
         VStack {
             ZStack {
-                Circles(animationValue: $moveInOut)
+                CirclesScreenCirclesView(animationValue: $moveInOut)
                 .opacity(0.5)
-                Circles(animationValue: $moveInOut)
+                CirclesScreenCirclesView(animationValue: $moveInOut)
                 .rotationEffect(.degrees(60))
                 .opacity(0.5)
-                Circles(animationValue: $moveInOut)
+                CirclesScreenCirclesView(animationValue: $moveInOut)
                 .rotationEffect(.degrees(120))
                 .opacity(0.5)
             }
@@ -42,33 +42,8 @@ struct CirclesScreen: View {
     }
 }
 
-struct Circles: View {
-    @Binding var animationValue: Bool
-    var size: CGFloat = 120
-    var travelDistance: CGFloat = 55
-    
-    var body: some View {
-        ZStack {
-            Circle().fill(LinearGradient(gradient: Gradient(colors:[.teal, .clear]),
-                                         startPoint: .top,
-                                         endPoint: .bottom))
-            .frame(width: size, height: size)
-            .offset(y: animationValue ? -travelDistance : 0)
-            Circle().fill(LinearGradient(gradient: Gradient(colors:[.teal, .clear]),
-                                         startPoint: .bottom,
-                                         endPoint: .top))
-            .frame(width: size, height: size)
-            .offset(y: animationValue ? travelDistance : 0)
-        }
-    }
-}
-
 #Preview {
     NavigationStack {
         CirclesScreen()
     }
-}
-
-#Preview {
-    Circles(animationValue: .constant(true))
 }

@@ -85,13 +85,13 @@ struct RecordPlayer: View {
                     .resizable()
                     .frame(width: 280, height: 280)
                     .keyframeAnimator(initialValue: AnimationValues(),
-                                      trigger: isPlaying,
+                                      repeating: isPlaying,
                                       content: { view, value in
                         view
                             .rotationEffect(value.rotation)
-                    }, keyframes: { value in
+                    }, keyframes: { _ in
                         KeyframeTrack(\.rotation) {
-                            
+                            LinearKeyframe(Angle(degrees: 360), duration: 1.0)
                         }
                     })
                     .padding([.bottom, .trailing], 20)

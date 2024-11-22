@@ -34,6 +34,9 @@ struct ContentView: View {
             NavigationLink(destination: CustomTransitionScreen()) {
                 listButtonLabel("Custom Transitions")
             }
+            NavigationLink(destination: ParallaxScreen()) {
+                listButtonLabel("Parallax Effect")
+            }
         }
         .navigationTitle("Animations Playground")
     }

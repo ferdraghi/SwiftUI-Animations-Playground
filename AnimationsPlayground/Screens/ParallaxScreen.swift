@@ -16,103 +16,25 @@ struct ParallaxScreen: View {
                 Spacer()
                 VStack {
                     Spacer()
-                    ZStack {
-                        Image("wolf")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 200)
-                            .clipShape(.rect(cornerRadius: 25))
-                            .shadow(color: .mint, radius: 50, x: 5, y: 5)
-                            .rotation3DEffect(.degrees(animation1 ? 13 : -13),
-                                              axis: (x: animation1 ? -90 : -45,
-                                                     y: animation1 ? -45 : -90,
-                                                     z: animation1 ? -30 : -85),
-                                              anchorZ: 50)
-                        Image("wolf")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 200)
-                            .clipShape(.rect(cornerRadius: 25))
-                            .opacity(0.25)
-                            .rotation3DEffect(.degrees(animation1 ? 13 : -13),
-                                              axis: (x: animation1 ? -90 : -45,
-                                                     y: animation1 ? -45 : -90,
-                                                     z: animation1 ? -30 : -85),
-                                              anchorZ: 20)
-                        Image("wolf")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 200)
-                            .clipShape(.rect(cornerRadius: 25))
-                            .opacity(0.25)
-                            .rotation3DEffect(.degrees(animation1 ? 13 : -13),
-                                              axis: (x: animation1 ? -90 : -45,
-                                                     y: animation1 ? -45 : -90,
-                                                     z: animation1 ? -30 : -85),
-                                              anchorZ: -10)
-                        Image("wolf")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 200)
-                            .clipShape(.rect(cornerRadius: 25))
-                            .opacity(0.25)
-                            .rotation3DEffect(.degrees(animation1 ? 13 : -13),
-                                              axis: (x: animation1 ? -90 : -45,
-                                                     y: animation1 ? -45 : -90,
-                                                     z: animation1 ? -30 : -85),
-                                              anchorZ: -40)
-                    }
+                    
+                    ParallaxScreenImageStackView(imageName: "wolf",
+                                                 animating: $animation1,
+                                                 animatingAngleDegrees: (13, -13),
+                                                 animatingAxis:
+                                                    (.init(x: -90, y: -45, z: -30),
+                                                     .init(x: -45, y: -90, z: -85)))
                     .animation(.easeInOut(duration: 3.5).repeatForever(), value: animation1)
+                    
                     Spacer(minLength: 30)
-                    VStack {
-                        ZStack {
-                            Image("cube")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 200)
-                                .clipShape(.rect(cornerRadius: 25))
-                                .shadow(color: .mint, radius: 60, x: 5, y: 5)
-                                .rotation3DEffect(.degrees(animation2 ? 18 : -18),
-                                                  axis: (x: animation2 ? -90 : -45,
-                                                         y: animation2 ? -45 : -90,
-                                                         z: animation1 ? 85 : -30),
-                                                  anchorZ: 50)
-                            Image("cube")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 200)
-                                .clipShape(.rect(cornerRadius: 25))
-                                .opacity(0.25)
-                                .rotation3DEffect(.degrees(animation2 ? 18 : -18),
-                                                  axis: (x: animation2 ? -90 : -45,
-                                                         y: animation2 ? -45 : -90,
-                                                         z: animation1 ? 85 : -30),
-                                                  anchorZ: 20)
-                            Image("cube")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 200)
-                                .clipShape(.rect(cornerRadius: 25))
-                                .opacity(0.25)
-                                .rotation3DEffect(.degrees(animation2 ? 18 : -18),
-                                                  axis: (x: animation2 ? -90 : -45,
-                                                         y: animation2 ? -45 : -90,
-                                                         z: animation1 ? 85 : -30),
-                                                  anchorZ: -10)
-                            Image("cube")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 200)
-                                .clipShape(.rect(cornerRadius: 25))
-                                .opacity(0.25)
-                                .rotation3DEffect(.degrees(animation2 ? 18 : -18),
-                                                  axis: (x: animation2 ? -90 : -45,
-                                                         y: animation2 ? -45 : -90,
-                                                         z: animation1 ? 85 : -30),
-                                                  anchorZ: -40)
-                        }
-                    }
+                    
+                    ParallaxScreenImageStackView(imageName: "cube",
+                                                 animating: $animation2,
+                                                 animatingAngleDegrees: (18, -18),
+                                                 animatingAxis:
+                                                    (.init(x: -90, y: -45, z: 85),
+                                                     .init(x: -45, y: -90, z: -30)))
                     .animation(.easeInOut(duration: 4).repeatForever(), value: animation2)
+                    
                     Spacer()
                 }
                 Spacer()

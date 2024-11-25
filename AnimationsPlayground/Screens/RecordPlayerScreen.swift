@@ -6,21 +6,56 @@
 //
 
 import SwiftUI
+import AVKit
+
+enum RecordPlayerState {
+    case stopped
+    case starting
+    case playing
+    case stopping
+}
 
 struct RecordPlayerScreen: View {
-    @State private var isPlaying = false
-    @State private var isStopping = false
+    @State private var state: RecordPlayerState = .stopped
+    @State private var audioPlayer: AVAudioPlayer?
+    
+    private var songDuration: Double {
+        audioPlayer?.duration ?? 0
+    }
+    
+    private var currentTime: Double {
+        audioPlayer?.currentTime ?? 0
+    }
+    
+    private var isPlaying: Bool {
+        state == .starting || state == .playing
+    }
     
     var body: some View {
         VStack {
             Text("This screen is broken as of now.")
                 .font(.title)
                 .multilineTextAlignment(.leading)
-            RecordPlayer(isPlaying: $isPlaying, isStopping: $isStopping)
+            RecordPlayer(state: $state, player: $audioPlayer)
                 .padding(.top, 40)
             Button {
-                isPlaying.toggle()
-                isStopping = !isPlaying
+                if state == .stopped ||
+                    state == .stopping {
+                    state = .starting
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                        state = .playing
+                        audioPlayer?.play()
+                    }
+                } else {
+                    state = .stopping
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        audioPlayer?.stop()
+                        audioPlayer?.currentTime = 0
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                        state = .stopped
+                    }
+                }
             } label: {
                 HStack(spacing: 8) {
                     Text(isPlaying ? "Stop " : "Play ")
@@ -36,10 +71,28 @@ struct RecordPlayerScreen: View {
                 .background(Capsule().strokeBorder(.white, lineWidth: 2))
                 
             }
+            .disabled(state == .starting || state == .stopping)
             .padding(.top, 80)
             Spacer()
         }
+        .onAppear() {
+            loadMusic()
+        }
         .navigationTitle("Record Player")
+    }
+    
+    private func loadMusic() {
+        guard let fileUrl = Bundle.main.path(forResource: "music", ofType: "m4a") else {
+            print("Audio file not found!")
+            return
+        }
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: URL(filePath: fileUrl))
+
+            audioPlayer?.numberOfLoops = 1
+        } catch {
+            print("Audioplayer failed: \(error)")
+        }
     }
 }
 
@@ -53,25 +106,63 @@ struct PlayerArmAnimationValues {
 }
 
 struct RecordPlayer: View {
-    @Binding var isPlaying: Bool
-    @Binding var isStopping: Bool
+    @Binding var state: RecordPlayerState
+    @Binding var player: AVAudioPlayer?
+    
+    private var rampUpRotations: Double {
+        360 * 5
+    }
     
     private var armPosition: Double {
-        if isStopping {
+        switch state {
+        case .playing, .stopping:
             return -27
+        default:
+            return -35
         }
-        
-        return -35
     }
     
     private var armTargetPosition: Double {
-        if isPlaying {
+        switch state {
+        case .starting, .playing:
             return -27
+        default:
+            return -35
         }
-        
-        return -35
     }
     
+    private var duration: Double {
+        player?.duration ?? 0
+    }
+    
+    private var currentTime: Double {
+        player?.currentTime ?? 0
+    }
+    
+    private var rotationDegrees: Double {
+        switch state {
+        case .starting:
+            return rampUpRotations
+        case .playing:
+            return (360 * duration) + rampUpRotations
+        case .stopping:
+            return ((360 * currentTime) + rampUpRotations * 2)
+        case .stopped:
+            return 0
+        }
+    }
+    private var animation: Animation {
+        switch state {
+        case .starting:
+            return .easeIn(duration: 5.1)
+        case .playing:
+            return .linear(duration: 120)
+        case .stopping:
+            return .easeOut(duration: 5)
+        case .stopped:
+            return .linear(duration: 0)
+        }
+    }
     var body: some View {
         VStack {
             ZStack {
@@ -81,26 +172,20 @@ struct RecordPlayer: View {
                     .border(.black, width: 10)
                     .clipShape(.rect(cornerRadius: 10))
                     .shadow(color: .white, radius: 10)
-                Image("record")
-                    .resizable()
-                    .frame(width: 280, height: 280)
-                    .keyframeAnimator(initialValue: AnimationValues(),
-                                      repeating: isPlaying,
-                                      content: { view, value in
-                        view
-                            .rotationEffect(value.rotation)
-                    }, keyframes: { _ in
-                        KeyframeTrack(\.rotation) {
-                            LinearKeyframe(Angle(degrees: 360), duration: 1.0)
-                        }
-                    })
-                    .padding([.bottom, .trailing], 20)
-                    .shadow(color: .black, radius: 8, x: 5, y: 5)
+                VStack{
+                    Image("record")
+                        .resizable()
+                        .frame(width: 280, height: 280)
+                        .rotationEffect(.degrees(rotationDegrees))
+                }
+                .animation(animation, value: state)
+                .padding([.bottom, .trailing], 20)
+                .shadow(color: .black, radius: 8, x: 5, y: 5)
                 Image("playerArm")
                     .resizable()
                     .frame(width: 150, height: 150)
                     .keyframeAnimator(initialValue: PlayerArmAnimationValues(rotation: Angle(degrees: armPosition)),
-                                      trigger: isPlaying,
+                                      trigger: state,
                                       content: { view, values in
                         view
                             .rotationEffect(values.rotation, anchor: .topTrailing)

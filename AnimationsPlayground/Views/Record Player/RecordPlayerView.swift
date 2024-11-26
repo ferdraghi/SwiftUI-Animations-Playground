@@ -163,6 +163,7 @@ struct RecordPlayer: View {
         stateChangeTimer?.invalidate()
         stateChangeTimer = nil
         state = .starting
+        player?.prepareToPlay()
         elapsedTime = 0
         armRotationSpeed = 0
         songPlaybackCountdown = player?.duration ?? 0.0
@@ -196,7 +197,6 @@ struct RecordPlayer: View {
         }
         do {
             player = try AVAudioPlayer(contentsOf: URL(filePath: fileUrl))
-            
             player?.numberOfLoops = 0
             
             let songDuration = player?.duration ?? 1.0

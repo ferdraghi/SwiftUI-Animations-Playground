@@ -9,7 +9,6 @@ import SwiftUI
 
 struct BackgroundsSlideshowScreen: View {
     @State private var currentBkg = 0
-    @State private var loadTabView = false
     @State private var hueAnimation = false
     private let imageNames = Array(1...13).map{"img\($0)"}
     
@@ -36,7 +35,6 @@ struct BackgroundsSlideshowScreen: View {
             currentBkg = (currentBkg + 1) % max(imageNames.count, 1)
         }
         .onAppear() {
-            loadTabView = true
             hueAnimation.toggle()
         }
         .navigationTitle("Background Slideshow")

@@ -21,9 +21,6 @@ struct RecordPlayerScreen: View {
     
     var body: some View {
         VStack {
-            Text("This screen is broken as of now.")
-                .font(.title)
-                .multilineTextAlignment(.leading)
             RecordPlayer(play: $play)
                 .padding(.top, 40)
             Button {
@@ -43,10 +40,11 @@ struct RecordPlayerScreen: View {
                 .background(Capsule().strokeBorder(.white, lineWidth: 2))
                 
             }
-            .padding(.top, 80)
+            .padding(.top, 40)
             Spacer()
         }
         .navigationTitle("Record Player")
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -117,6 +115,18 @@ struct RecordPlayer: View {
                     .shadow(color: .black, radius: 5, x: 2, y: 2)
             }
             .frame(width: 345, height: 345)
+            Text("Playback Arm Position: \(String(format: "%.2f", armDegrees))")
+                .font(.system(size: 18))
+                .monospacedDigit()
+                .padding(.top, 30)
+            Text("Playback Arm Scale: \(String(format: "%.2f", armScale))")
+                .font(.system(size: 18))
+                .monospacedDigit()
+                .padding(.top, 10)
+            Text("Song Remaining: \(String(format: "%.2f", songPlaybackCountdown))")
+                .font(.system(size: 18))
+                .monospacedDigit()
+                .padding(.top, 10)
         }
         .onChange(of: play, { oldValue, newValue in
             if newValue {

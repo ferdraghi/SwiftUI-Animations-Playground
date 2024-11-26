@@ -12,42 +12,32 @@ struct BackgroundsSlideshowScreen: View {
     @State private var loadTabView = false
     @State private var hueAnimation = false
     private let imageNames = Array(1...13).map{"img\($0)"}
-
+    
     private let timer = Timer.publish(every: 5, on: .main, in: .default).autoconnect()
     
     var body: some View {
-        GeometryReader { g in
-            VStack {
-                if (loadTabView) {
-                    TabView(selection: $currentBkg) {
-                        ForEach(imageNames.indices, id:\.self) { index in
-                            Image(imageNames[index])
-                                .resizable()
-                                .scaledToFill()
-                                .tag(index)
-                        }
-                    }
-                    .tabViewStyle(.page)
-                    .hueRotation(.degrees(hueAnimation ? 720 : 0))
-                    .padding(.bottom, 0)
-                    .animation(.easeInOut(duration:1), value: currentBkg)
-                    .animation(.linear(duration: 5).repeatForever(), value: hueAnimation)
+        VStack {
+            TabView(selection: $currentBkg) {
+                ForEach(imageNames.indices, id:\.self) { index in
+                    Image(imageNames[index])
+                        .resizable()
+                        .scaledToFill()
+                        .tag(index)
                 }
             }
-            .padding(.top, 20)
+            .tabViewStyle(.page)
+            .hueRotation(.degrees(hueAnimation ? 720 : 0))
+            .padding(.bottom, 0)
+            .animation(.easeInOut(duration:1), value: currentBkg)
+            .animation(.linear(duration: 5).repeatForever(), value: hueAnimation)
         }
+        .padding(.top, 20)
         .onReceive(timer) { _ in
             currentBkg = (currentBkg + 1) % max(imageNames.count, 1)
         }
         .onAppear() {
-            //So... Apparently TabView is broken when using tabViewStyle and loading during transitions?
-            //So I have to do this crap?
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                loadTabView = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                    hueAnimation.toggle()
-                }
-            }
+            loadTabView = true
+            hueAnimation.toggle()
         }
         .navigationTitle("Background Slideshow")
     }

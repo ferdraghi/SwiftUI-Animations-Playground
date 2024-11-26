@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVKit
+import Combine
 
 enum RecordPlayerState {
     case stopped
@@ -18,7 +19,7 @@ enum RecordPlayerState {
 struct RecordPlayerScreen: View {
     @State private var state: RecordPlayerState = .stopped
     @State private var audioPlayer: AVAudioPlayer?
-    
+    @State private var play: Bool = false
     private var songDuration: Double {
         audioPlayer?.duration ?? 0
     }
@@ -36,9 +37,10 @@ struct RecordPlayerScreen: View {
             Text("This screen is broken as of now.")
                 .font(.title)
                 .multilineTextAlignment(.leading)
-            RecordPlayer(state: $state, player: $audioPlayer)
+            RecordPlayer(state: $state, player: $audioPlayer, play: $play)
                 .padding(.top, 40)
             Button {
+                play.toggle()
                 if state == .stopped ||
                     state == .stopping {
                     state = .starting
@@ -72,6 +74,7 @@ struct RecordPlayerScreen: View {
                 
             }
             .disabled(state == .starting || state == .stopping)
+            .opacity((state == .starting || state == .stopping) ? 0.3 : 1)
             .padding(.top, 80)
             Spacer()
         }
@@ -90,6 +93,7 @@ struct RecordPlayerScreen: View {
             audioPlayer = try AVAudioPlayer(contentsOf: URL(filePath: fileUrl))
 
             audioPlayer?.numberOfLoops = 1
+            //audioPlayer?.volume = 0.1
         } catch {
             print("Audioplayer failed: \(error)")
         }
@@ -108,11 +112,12 @@ struct PlayerArmAnimationValues {
 struct RecordPlayer: View {
     @Binding var state: RecordPlayerState
     @Binding var player: AVAudioPlayer?
+    @Binding var play: Bool
     
-    private var rampUpRotations: Double {
-        360 * 5
-    }
-    
+    @State private var timer: AnyCancellable?
+    @State private var currentRotationDegrees: CGFloat = 0.0
+    @State private var speed: CGFloat = 0.0
+
     private var armPosition: Double {
         switch state {
         case .playing, .stopping:
@@ -121,7 +126,7 @@ struct RecordPlayer: View {
             return -35
         }
     }
-    
+
     private var armTargetPosition: Double {
         switch state {
         case .starting, .playing:
@@ -130,39 +135,24 @@ struct RecordPlayer: View {
             return -35
         }
     }
-    
+
     private var duration: Double {
         player?.duration ?? 0
     }
-    
+
     private var currentTime: Double {
         player?.currentTime ?? 0
     }
+
+    private var armPlayingAnimation: Animation {
+        switch state {
+        case .playing:
+                .linear(duration: duration)
+        default:
+                .linear(duration: 0)
+        }
+    }
     
-    private var rotationDegrees: Double {
-        switch state {
-        case .starting:
-            return rampUpRotations
-        case .playing:
-            return (360 * duration) + rampUpRotations
-        case .stopping:
-            return ((360 * currentTime) + rampUpRotations * 2)
-        case .stopped:
-            return 0
-        }
-    }
-    private var animation: Animation {
-        switch state {
-        case .starting:
-            return .easeIn(duration: 5.1)
-        case .playing:
-            return .linear(duration: 120)
-        case .stopping:
-            return .easeOut(duration: 5)
-        case .stopped:
-            return .linear(duration: 0)
-        }
-    }
     var body: some View {
         VStack {
             ZStack {
@@ -172,15 +162,12 @@ struct RecordPlayer: View {
                     .border(.black, width: 10)
                     .clipShape(.rect(cornerRadius: 10))
                     .shadow(color: .white, radius: 10)
-                VStack{
-                    Image("record")
-                        .resizable()
-                        .frame(width: 280, height: 280)
-                        .rotationEffect(.degrees(rotationDegrees))
-                }
-                .animation(animation, value: state)
-                .padding([.bottom, .trailing], 20)
-                .shadow(color: .black, radius: 8, x: 5, y: 5)
+                Image("record")
+                    .resizable()
+                    .frame(width: 280, height: 280)
+                    .rotationEffect(.degrees(currentRotationDegrees))
+                    .padding([.bottom, .trailing], 20)
+                    .shadow(color: .black, radius: 8, x: 5, y: 5)
                 Image("playerArm")
                     .resizable()
                     .frame(width: 150, height: 150)
@@ -192,11 +179,11 @@ struct RecordPlayer: View {
                             .scaleEffect(values.scale, anchor: .topTrailing)
                     }, keyframes: { _ in
                         KeyframeTrack(\.scale) {
-                            LinearKeyframe(1.05, duration: 1.0, timingCurve: .easeInOut)
-                            LinearKeyframe(1.05, duration: 3.0, timingCurve: .linear)
-                            LinearKeyframe(1.0, duration: 1.0, timingCurve: .easeInOut)
+                            LinearKeyframe((state == .starting || state == .stopping) ?  1.05 : 1.0, duration: 1.0, timingCurve: .easeInOut)
+                            LinearKeyframe((state == .starting || state == .stopping) ?  1.05 : 1.0, duration: 3.0, timingCurve: .linear)
+                            LinearKeyframe(1.0, duration: 1.0, timingCurve: .easeIn)
                         }
-                        
+
                         KeyframeTrack(\.rotation) {
                             LinearKeyframe(Angle(degrees: armPosition), duration: 1.0)
                             LinearKeyframe(Angle(degrees: armTargetPosition), duration: 3.0, timingCurve: .easeInOut)
@@ -208,21 +195,46 @@ struct RecordPlayer: View {
             }
             .frame(width: 345, height: 345)
         }
+        .onChange(of: play, { oldValue, newValue in
+            if newValue {
+                startTimer()
+            }
+        })
+        .onChange(of: state) { oldValue, newValue in
+            if newValue == .stopped {
+                timer?.cancel()
+                timer = nil
+            }
+        }
+    }
+    
+    private func startTimer() {
+        timer?.cancel()
+        timer = nil
+        timer = Timer
+            .publish(every: 1/60,
+                     on: .main,
+                     in: .common)
+            .autoconnect()
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                if play {
+                    speed = min(speed + 0.05, 10.0)
+                } else {
+                    speed = max(speed - 0.05, 0.0)
+                }
+                if currentRotationDegrees > 360 {
+                    currentRotationDegrees -= 360
+                }
+                withAnimation {
+                    currentRotationDegrees += speed
+                }
+            }
     }
 }
 
 #Preview {
     NavigationStack {
         RecordPlayerScreen()
-    }
-}
-
-extension Animation {
-    func `repeat`(while expression: Bool, autoreverses: Bool = true) -> Animation {
-        if expression {
-            return self.repeatForever(autoreverses: autoreverses)
-        } else {
-            return self
-        }
     }
 }

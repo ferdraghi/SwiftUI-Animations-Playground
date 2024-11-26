@@ -75,8 +75,11 @@ struct RecordPlayer: View {
     @State private var armRotationSpeed = 0.0
     
     private let armScaleStep = 0.05 / 60.0
+    //Arm Speed accounting for 2 seconds of transition from starting/stopping to playing/stopped
     private let armRotationStep = 23.0 / 120.0
+    //Acceleration for arm during transitions from starting/stopping to playing/stopped. Takes 2 seconds to reach full speed.
     private let armRotationSpeedAcceleration = (23.0 / 120.0) / 120.0
+    // Transition time from starting/stopping to playing/stopped
     private let timeToStartStop = 5.0
     @State private var armPlaybackSpeed = 0.0
     @State private var songPlaybackCountdown = 0.0
